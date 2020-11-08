@@ -1,0 +1,194 @@
+Pedido -> criação job report -> select de um periodo (N registos raw)-> insert profile -> fim de job 
+
+Pedido  -> criação job profile -> select  profile -> calculo de KPI -> devolver um KPI -> apresenta o valor no ecrã
+
+
+
+http://localhost:8080/
+
+
+---- CLOUD ---
+gcloud container clusters get-credentials kpi-profile --zone europe-west1-b --project sigma-chemist-282513
+kubectl proxy --port=8080
+
+
+---- MiniKube ----
+
+minikube start --memory 4000 --cpus 3 
+minikube dashboard
+
+minikube version: v0.33.1
+
+
+---- Set up Dashboard ----
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
+kubectl create clusterrolebinding serviceaccounts-cluster-admin   --clusterrole=cluster-admin --group=system:serviceaccounts
+
+kubectl proxy
+kubectl -n kube-system describe secret default
+
+
+ gcloud container clusters get-credentials cluster-1 --zone us-central1-c --project sigma-chemist-282513 \
+ && echo "# When the next line says 'Forwarding from...', go to: https://ssh.cloud.google.com/devshell/proxy?port=8080" && kubectl port-forward --namespace kube-system $(kubectl get pod --namespace kube-system --selector="k8s-app=kubernetes-dashboard" --output jsonpath='{.items[0].metadata.name}') 8080:8443
+
+
+---- Build and Deploy Services and Workers ----
+Existe um .bat para cada deploy.
+
+mvn package
+
+
+docker build . -t dillaz/reporterfactory:latest
+docker push dillaz/reporterfactory:latest
+
+docker build . -t dillaz/reporterfactory:latest
+docker push dillaz/reporterfactory:latest
+
+docker build . -t dillaz/profilerfactory:latest
+docker push dillaz/profilerfactory:latest
+
+docker build . -t dillaz/raw:latest
+docker push dillaz/raw:latest
+
+docker build . -t dillaz/profiler:lat
+docker push dillaz/profiler:latest
+
+docker build . -t dillaz/reporter:latest
+docker push dillaz/reporter:latest
+
+
+
+---- Expose Services ----
+
+kubectl expose deployment reporterfactory --type=LoadBalancer --name=reporterfactory 
+kubectl expose deployment profilerfactory --type=LoadBalancer --name=profilerfactory
+
+kubectl service profilerfactory --url
+kubectl service reporterfactory --url
+
+---- BD de Cassandra  ----
+
+kubectl create -f https://k8s.io/examples/application/cassandra/cassandra-service.yaml
+kubectl create -f https://k8s.io/examples/application/cassandra/cassandra-statefulset.yaml
+
+kubectl apply -f deploy/crds.yaml
+kubectl apply -f deploy/bundle.yaml
+kubectl apply -f examples/example-datacenter-minimal.yaml
+
+
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT now() FROM system.local;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Raw;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Report;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.WorkQueue;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Profile;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Raw WHERE timestamp >='2020-04-13 14:04:10.498' ALLOW FILTERING;" cassandra-test-cluster-dc1-nodes
+
+
+
+
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "DROP TABLE demodb.Raw;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-1 -c cassandra -- cqlsh -e "DROP TABLE demodb.Report;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-1 -c cassandra -- cqlsh -e "DROP TABLE demodb.WorkQueue;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-1 -c cassandra -- cqlsh -e "DROP TABLE demodb.Profile;" cassandra-test-cluster-dc1-nodes
+
+kubectl exec -it cassandra-2 -- bash
+
+
+
+
+---- BD de Parametros MySql----
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---      
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: manual
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard
+  replication-type: none
+  
+kubectl apply -f https://k8s.io/examples/application/mysql/mysql-deployment.yaml
+kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -ppassword
+
+
+CREATE DATABASE Parametros;
+USE Parametros;
+CREATE TABLE Parametro (
+	kpi VARCHAR(255),
+    timeReport int,
+	timewindowReport int,
+    timeProfile int,
+    valMax int,
+	valMin int
+);
+
+INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax)
+VALUES ('bitrate',5, 1, 5, 200, 800);
+
+INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax)
+VALUES ('TCPLoss',5, 1, 5, 200, 800);
+
+
+CREATE TABLE Notification (
+    Error VARCHAR(255),
+	timestampError  TIMESTAMP
+);
+
+CREATE TABLE ProfileCache(id VARCHAR(255), reportid VARCHAR(255), KPI VARCHAR(255),  watch double ,value int, TIMESTAMP timestamp);
+
+
+
+http://localhost:9010/raw/
+http://localhost:9010/reporter/bitrate
+http://localhost:9000/profiler/bitrate
+http://localhost:9010/reporter/change/bitrate
+http://localhost:9010/profiler/change/bitrate
+localhost:32000/ -- Granana
+
+
+
+
+-----------------------------
+
+javac reporter.java
+
+jar cfe reporter.jar Reporter Reporter.class
+
+vagrant up
+
+vagrant ssh
+
+mvn exec:java -Dstart-class=org.profilerfactory.demo.Application
+
+minikube status
+
+minikube service profilerfactory --url
+
+1 - java em kubernetes
+	- actualizar 
+	- lançar jobs
+	
+
+2 - vagrant para Dockerise 
+
+centos/7	
+
+3 - imagens Cassandra 
+
+
+
+vagrant up
+vagrant ssh

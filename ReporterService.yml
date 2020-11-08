@@ -1,0 +1,33 @@
+{
+  "kind": "Service",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "reporterfactory",
+    "namespace": "default",
+    "selfLink": "/api/v1/namespaces/default/services/reporterfactory",
+    "creationTimestamp": "2019-03-07T19:46:28Z",
+    "labels": {
+      "run": "reporterfactory"
+    }
+  },
+  "spec": {
+    "ports": [
+      {
+        "protocol": "TCP",
+        "port": 8080,
+        "targetPort": 8080,
+        "nodePort": 31169
+      }
+    ],
+    "selector": {
+      "run": "reporterfactory"
+    },
+    "clusterIP": "10.108.190.70",
+    "type": "NodePort",
+    "sessionAffinity": "None",
+    "externalTrafficPolicy": "Cluster"
+  },
+  "status": {
+    "loadBalancer": {}
+  }
+}

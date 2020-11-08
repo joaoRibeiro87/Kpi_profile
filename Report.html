@@ -1,0 +1,56 @@
+<style>
+.button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+}
+</style>
+
+<button class="button" onClick="window.open('grafana:3000');">
+     <span class="icon">Raw Job</span>
+</button>
+</br>
+ <span></span>
+</br>
+<label for="report">Choose a report for kpi:</label>
+<select id="reportInput">
+  <option value="bitrate">bitrate</option>
+  <option value="ImpactingEvents">ImpactingEvents</option>
+  <option value="TCPLoss">TCPLoss</option>
+</select>
+
+<button type="button" class="button" onclick="getReportInput();">Create Report</button>
+</br>
+ <span></span>
+</br>
+
+<label for="reportparameter">Choose a parameter to change for the selected kpi:</label>
+<select id="reportparameterInput">
+  <option value="timeReport">timeReport</option>
+  <option value="timewindowReport">timewindowReport</option>
+</select>
+
+ <input type="text" placeholder="value..." id="myInput">
+  <button type="button"  class="button">Change parameter test</button>
+<script>
+    function getReportInput(){
+        // Selecting the input element and get its value 
+        var inputVal = document.getElementById("reportInput").value;
+        
+        // Displaying the value
+        window.open('http://www.example.com/report/'+inputVal)
+    }
+    
+    
+      function getProfileInput(){
+        // Selecting the input element and get its value 
+        var inputVal = document.getElementById("profileInput").value;
+        
+        // Displaying the value
+        window.open('http://www.example.com/profile/'+inputVal)
+    }
+</script>

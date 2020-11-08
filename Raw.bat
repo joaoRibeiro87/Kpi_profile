@@ -1,0 +1,5 @@
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "use demodb;INSERT INTO Raw (id, deviceName, deviceType, bitrate, timestamp) VALUES(uuid(),'SteveRouter','Router', 100000, '2020-03-01 13:30:54.234-0800');" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "use demodb;INSERT INTO Raw (id, deviceName, deviceType, bitrate, timestamp) VALUES(uuid(),'SteveRouter','Router', 200000, '2020-07-03 13:30:54.234-0800');" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "use demodb;INSERT INTO Raw (id, deviceName, deviceType, bitrate, timestamp) VALUES(uuid(),'SteveRouter','Router', 200000, '2020-07-02 13:30:54.234-0800');" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "use demodb;INSERT INTO Raw (id, deviceName, deviceType, bitrate, timestamp) VALUES(uuid(),'SteveRouter','Router', 200000, '2020-07-02 13:30:54.234-0800');" cassandra-test-cluster-dc1-nodes
+
