@@ -9,53 +9,56 @@ Consola do cluster kubernetes na cloud: https://console.cloud.google.com/iam-adm
 
 Estrutura do projecto :
 
-   1 -Base de dados : 
+1 -Base de dados : 
    Cassandra
+   
     - Criar statefull set: 
-    kubectl apply -f deploy/crds.yaml
-    kubectl apply -f deploy/bundle.yaml
-    kubectl apply -f examples/example-datacenter-minimal.yaml
-    
-    
-    - Criação do modelo : 
-    DbData.bat
+          kubectl apply -f deploy/crds.yaml
+          kubectl apply -f deploy/bundle.yaml
+          kubectl apply -f examples/example-datacenter-minimal.yaml
+   
+    - Criação do modelo: 
+          DbData.bat
     
     MySql
     
-    Criar statefull set:
+    - Criar statefull set:
+           kubectl apply -f https://k8s.io/examples/application/mysql/mysql-pv.yaml
+           kubectl apply -f https://k8s.io/examples/application/mysql/mysql-deployment.yaml
      
-     kubectl apply -f https://k8s.io/examples/application/mysql/mysql-pv.yaml
-
-     kubectl apply -f https://k8s.io/examples/application/mysql/mysql-deployment.yaml
+    - Cliente MySql:
+            kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -ppassword
      
-     Cliente MySql:
-     
-     kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -ppassword
-     
-     Crição do modelo
+    - Crição do modelo:
        DbDataMysql.sql
      
-     Criação do deployer:
-     ProfilerDeployer.yml
-     ReporterDeployer.yml
      
-     Exposição do serviço:
-     kubectl expose deployment reporterfactory --type=LoadBalancer --name=reporterfactory 
-     kubectl expose deployment profilerfactory --type=LoadBalancer --name=profilerfactory
+2 -Objectos Kubernetes : 
+    
+    - Criação do deployer:
+           kubectl apply -f ProfilerDeployer.yml
+           kubectl apply -f ReporterDeployer.yml
      
-     Atualização da imagem:
-     buildProfilerFactory.bat
-     buildReporterFactory.bat
-     buildRaw.bat
-     buildProfiler.bat
-     buildReporter.bat
+    - Exposição do serviço:
+           kubectl expose deployment reporterfactory --type=LoadBalancer --name=reporterfactory 
+           kubectl expose deployment profilerfactory --type=LoadBalancer --name=profilerfactory
      
-     User interface:
+    - Atualização da imagem:
+           buildProfilerFactory.bat
+           buildReporterFactory.bat
+           buildRaw.bat
+           buildProfiler.bat
+           buildReporter.bat
+     
+3 - User interface:
      Grafana
-     
+         kubectl create -f grafana-datasource-config.yaml
+         kubectl create -f deployment.yaml
+         kubectl expose deployment profilerfactory --type=LoadBalancer --name=grafana
+         
      Passos de utilização:
-     1 - Criar processo Raw
-     2 - Criar CronJob Report e Profile dos KPIs disponiveis
-     3 - Atualizar os parametros para cada KPI
+        1 - Criar processo Raw
+        2 - Criar CronJob Report e Profile dos KPIs disponiveis
+        3 - Atualizar os parametros para cada KPI
      
-     
+     ![Grafana KPI](https://i.imgur.com/ago7CSA.png)
