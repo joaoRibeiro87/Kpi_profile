@@ -62,3 +62,4 @@ Estrutura do projecto :
         3 - Atualizar os parametros para cada KPI
      
      ![Grafana KPI](https://i.imgur.com/ago7CSA.png)
+     ![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
