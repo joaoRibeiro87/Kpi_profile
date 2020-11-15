@@ -1,6 +1,7 @@
 Projecto de demonstração da implementação da arquitetura proposta para a tese "Profiling KPIs in highly scalable networks"
 
-
+![Grafana KPI](https://i.imgur.com/ago7CSA.png)
+![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
 Dissertação no projecto overleaf: https://www.overleaf.com/read/yvsstzmdrszy
 
 Interface grafica do projecto: http://34.72.14.38:3000/d/ilxKiE3Zk/parametros?orgId=1
@@ -61,5 +62,4 @@ Estrutura do projecto :
         2 - Criar CronJob Report e Profile dos KPIs disponiveis
         3 - Atualizar os parametros para cada KPI
      
-     ![Grafana KPI](https://i.imgur.com/ago7CSA.png)
-     ![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
+
