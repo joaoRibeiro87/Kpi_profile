@@ -23,6 +23,7 @@ minikube version: v0.33.1
 ---- Set up Dashboard ----
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
 kubectl create clusterrolebinding serviceaccounts-cluster-admin   --clusterrole=cluster-admin --group=system:serviceaccounts
+kubectl create clusterrolebinding default-admin --clusterrole cluster-admin --serviceaccount=kube-system:default
 
 kubectl proxy
 kubectl -n kube-system describe secret default
@@ -50,7 +51,7 @@ docker push dillaz/profilerfactory:latest
 docker build . -t dillaz/raw:latest
 docker push dillaz/raw:latest
 
-docker build . -t dillaz/profiler:lat
+docker build . -t dillaz/profiler:latest
 docker push dillaz/profiler:latest
 
 docker build . -t dillaz/reporter:latest
@@ -62,7 +63,10 @@ docker push dillaz/reporter:latest
 
 kubectl expose deployment reporterfactory --type=LoadBalancer --name=reporterfactory 
 kubectl expose deployment profilerfactory --type=LoadBalancer --name=profilerfactory
+kubectl expose deployment grafana --type=LoadBalancer --name=grafana
 
+kubectl apply -f ProfilerDeployer.yml
+kubectl apply -f ReporterDeployer.yml
 kubectl service profilerfactory --url
 kubectl service reporterfactory --url
 
@@ -76,15 +80,20 @@ kubectl apply -f deploy/bundle.yaml
 kubectl apply -f examples/example-datacenter-minimal.yaml
 
 
+broadcast_rpc_address: cassandra-test-cluster-dc1-rack1-0  <-----------------------------------
+
+
+GET TABLE
+
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT now() FROM system.local;" cassandra-test-cluster-dc1-nodes
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Raw;" cassandra-test-cluster-dc1-nodes
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Report;" cassandra-test-cluster-dc1-nodes
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.WorkQueue;" cassandra-test-cluster-dc1-nodes
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Profile;" cassandra-test-cluster-dc1-nodes
-kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Raw WHERE timestamp >='2020-04-13 14:04:10.498' ALLOW FILTERING;" cassandra-test-cluster-dc1-nodes
+kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "SELECT * FROM demodb.Report WHERE id = 'ab572d90-0ca0-11eb-a633-cd2a5175dd03' ALLOW FILTERING;" cassandra-test-cluster-dc1-nodes
 
 
-
+DROP TABLE
 
 kubectl exec cassandra-test-cluster-dc1-rack1-0 -c cassandra -- cqlsh -e "DROP TABLE demodb.Raw;" cassandra-test-cluster-dc1-nodes
 kubectl exec cassandra-test-cluster-dc1-rack1-1 -c cassandra -- cqlsh -e "DROP TABLE demodb.Report;" cassandra-test-cluster-dc1-nodes
@@ -119,6 +128,9 @@ provisioner: kubernetes.io/gce-pd
 parameters:
   type: pd-standard
   replication-type: none
+
+  jdbc:mysql://mysql:3306","root","password"
+  
   
 kubectl apply -f https://k8s.io/examples/application/mysql/mysql-deployment.yaml
 kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -ppassword
@@ -132,20 +144,24 @@ CREATE TABLE Parametro (
 	timewindowReport int,
     timeProfile int,
     valMax int,
-	valMin int
+	valMin int,
+	sleepReport int,
+	sleepProfile int
 );
 
-INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax)
-VALUES ('bitrate',5, 1, 5, 200, 800);
+INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax, sleepReport, sleepProfile)
+VALUES ('bitrate',5, 1, 20, 200, 800, 3, 3);
 
-INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax)
-VALUES ('TCPLoss',5, 1, 5, 200, 800);
+INSERT INTO Parametro (kpi,timeReport,timewindowReport,timeProfile, valMin,valMax, sleepReport, sleepProfile)
+VALUES ('TCPLoss',5, 1, 20, 200, 800, 0, 0);
 
 
 CREATE TABLE Notification (
     Error VARCHAR(255),
 	timestampError  TIMESTAMP
 );
+
+INSERT INTO Notification (Error,timestampError) VALUES ('O valor do indicador BitRate inferior ao valor de referência: 200', NOW());
 
 CREATE TABLE ProfileCache(id VARCHAR(255), reportid VARCHAR(255), KPI VARCHAR(255),  watch double ,value int, TIMESTAMP timestamp);
 
@@ -157,38 +173,3 @@ http://localhost:9000/profiler/bitrate
 http://localhost:9010/reporter/change/bitrate
 http://localhost:9010/profiler/change/bitrate
 localhost:32000/ -- Granana
-
-
-
-
------------------------------
-
-javac reporter.java
-
-jar cfe reporter.jar Reporter Reporter.class
-
-vagrant up
-
-vagrant ssh
-
-mvn exec:java -Dstart-class=org.profilerfactory.demo.Application
-
-minikube status
-
-minikube service profilerfactory --url
-
-1 - java em kubernetes
-	- actualizar 
-	- lançar jobs
-	
-
-2 - vagrant para Dockerise 
-
-centos/7	
-
-3 - imagens Cassandra 
-
-
-
-vagrant up
-vagrant ssh
